@@ -64,7 +64,7 @@ nex_err_t nextion_component_get_boolean(nextion_t *handle, const char *component
     return code;
 }
 
-nex_err_t nextion_component_set_text(nextion_t *handle, const char *component_name, char *text)
+nex_err_t nextion_component_set_text(nextion_t *handle, const char *component_name, const char *text)
 {
     return nextion_component_set_property_text(handle, component_name, "txt", text);
 }
@@ -120,7 +120,7 @@ nex_err_t nextion_component_get_property_number(nextion_t *handle,
 nex_err_t nextion_component_set_property_text(nextion_t *handle,
                                               const char *component_name,
                                               const char *property_name,
-                                              char *text)
+                                              const char *text)
 {
     CMP_CHECK_HANDLE(handle, NEX_FAIL)
     CMP_CHECK((component_name != NULL), "component_name error(NULL)", NEX_FAIL)

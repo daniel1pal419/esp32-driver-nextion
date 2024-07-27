@@ -112,7 +112,7 @@ extern "C"
      */
     nex_err_t nextion_component_set_text(nextion_t *handle,
                                          const char *component_name,
-                                         char *text);
+                                         const char *text);
 
     /**
      * @brief Set a component ".val" value.
@@ -181,7 +181,7 @@ extern "C"
     nex_err_t nextion_component_set_property_text(nextion_t *handle,
                                                   const char *component_name,
                                                   const char *property_name,
-                                                  char *text);
+                                                  const char *text);
 
     /**
      * @brief Set a component property with number.

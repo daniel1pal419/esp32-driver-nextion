@@ -47,8 +47,8 @@ extern "C"
 /**
  * @brief Verify if a code represents an event.
  */
-#define NEX_DVC_CODE_IS_EVENT(code, length) ((code >= NEX_DVC_EVT_TOUCH_OCCURRED && code != NEX_DVC_RSP_SENDME_RESULT && code != NEX_DVC_RSP_GET_STRING && code != NEX_DVC_RSP_GET_NUMBER && code != NEX_DVC_RSP_TRANSPARENT_DATA_READY && code != NEX_DVC_RSP_TRANSPARENT_DATA_FINISHED) || (code == NEX_DVC_EVT_HARDWARE_START_RESET && length == 6))
 
+#define NEX_DVC_CODE_IS_EVENT(code, length) ((code == NEX_DVC_RSP_SENDME_RESULT) || (code >= NEX_DVC_EVT_TOUCH_OCCURRED && code != NEX_DVC_RSP_SENDME_RESULT && code != NEX_DVC_RSP_GET_STRING && code != NEX_DVC_RSP_GET_NUMBER && code != NEX_DVC_RSP_TRANSPARENT_DATA_READY && code != NEX_DVC_RSP_TRANSPARENT_DATA_FINISHED) || (code == NEX_DVC_EVT_HARDWARE_START_RESET && length == 6))
 /**
  * @brief Verify if a code represents a response.
  */

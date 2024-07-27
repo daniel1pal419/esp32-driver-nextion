@@ -28,7 +28,7 @@ static bool nextion_core_uart_write_as_command(nextion_t *handle, const char *fo
  */
 struct nextion_t
 {
-    char command_format_buffer[CONFIG_NEX_UART_TRANS_COMMAND_FORMAT_BUFFER_SIZE]; /*!< Buffer used for formating commands. */
+    char command_format_buffer[CONFIG_NEX_UART_TRANS_COMMAND_FORMAT_BUFFER_SIZE]; /*!< Buffer used for formatting commands. */
     event_callback_on_touch event_callback_on_touch;                              /*!< Callbacks for 'on touch' events. */
     event_callback_on_touch_coord event_callback_on_touch_coord;                  /*!< Callbacks for 'on touch with coordinates' events. */
     event_callback_on_device event_callback_on_device;                            /*!< Callbacks for 'on device' events. */
@@ -79,7 +79,7 @@ nextion_t *nextion_driver_install(uart_port_t uart_num, uint32_t baud_rate, gpio
 
     if (xTaskCreate(&nextion_core_uart_task,
                     "nextion",
-                    2048,
+                    4096,
                     (void *)driver,
                     CONFIG_NEX_UART_TASK_PRIORITY,
                     &driver->uart_task) != pdPASS)
@@ -169,6 +169,8 @@ nex_err_t nextion_init(nextion_t *handle)
     // when sleeping. Any failure will come when setting "bkcmd".
     nextion_system_wakeup(handle);
 
+    vTaskDelay(pdMS_TO_TICKS(100));
+
     // All logic relies on receiving responses at all times.
     if (nextion_command_send(handle, "bkcmd=3") != NEX_OK)
     {
@@ -215,7 +217,6 @@ nex_err_t nextion_command_send_get_bytes(nextion_t *handle, uint8_t *buffer, siz
     nextion_core_command_sync_release(handle);
 
     va_end(args);
-
     return code;
 }
 
@@ -474,6 +475,20 @@ static bool nextion_core_event_dispatch(nextion_t *handle, const uint8_t *buffer
 
     switch (code)
     {
+    case NEX_DVC_RSP_SENDME_RESULT:
+        if (buffer_length == 5)
+        {
+            nextion_on_touch_event_t event = {
+                .handle = handle,
+                .page_id = buffer[1],
+                .component_id = buffer[2], // no need
+                .state = buffer[3]};       // no need
+
+            CMP_LOGD("dispatching 'sendme' event %x", buffer[1]);
+
+            handle->event_callback_on_touch(event);
+        }
+        break;
     case NEX_DVC_EVT_TOUCH_OCCURRED:
         if (buffer_length == 7 && handle->event_callback_on_touch != NULL)
         {
@@ -575,6 +590,11 @@ static nex_err_t nextion_core_uart_read_as_simple_result(nextion_t *handle)
 
     if (bytes_read != NEX_DVC_CMD_ACK_LENGTH)
     {
+        for (int i = 0; i < NEX_DVC_EVT_MAX_RESPONSE_LENGTH; i++)
+        {
+            CMP_LOGW("buffer[%i]: %i", i , buffer[i]);
+        }
+        
         CMP_LOGE("invalid response size, expected %d but received %d", NEX_DVC_CMD_ACK_LENGTH, bytes_read);
 
         return NEX_DVC_INSTRUCTION_FAIL;
