@@ -77,6 +77,9 @@ nextion_t *nextion_driver_install(uart_port_t uart_num, uint32_t baud_rate, gpio
                                         &driver->uart_queue,              // Queue pointer.
                                         0));                              // Allocation flags.
 
+    /* Wake up the Nextion if it's in sleep mode, before we can initialize it. */
+    uart_write_bytes(UART_NUM_2, NEX_DVC_EXIT_SLEEP_MODE, sizeof(NEX_DVC_EXIT_SLEEP_MODE) - 1);
+
     if (xTaskCreate(&nextion_core_uart_task,
                     "nextion",
                     4096,

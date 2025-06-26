@@ -300,6 +300,7 @@ extern "C"
  */
 #define NEX_DVC_RSP_TRANSPARENT_DATA_READY 0xFEU
 
+#define NEX_DVC_EXIT_SLEEP_MODE "sleep=0\xFF\xFF\xFF"
 #ifdef __cplusplus
 }
 #endif
