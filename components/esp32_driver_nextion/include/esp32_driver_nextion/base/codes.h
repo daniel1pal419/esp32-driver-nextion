@@ -28,31 +28,16 @@ extern "C"
 /**
  * @brief Timeout.
  */
-#define NEX_TIMEOUT 0x02
+#define NEX_TIMEOUT 0x40
 
 /* ========================================
  *         CODE VERIFICATION HELPERS
  * ======================================== */
 
 /**
- * @brief Verify if a code means success.
- */
-#define NEX_DVC_CODE_IS_SUCCESS(code) (code == NEX_DVC_INSTRUCTION_OK)
-
-/**
- * @brief Verify if a code means failure.
- */
-#define NEX_DVC_CODE_IS_FAILURE(code) (code == NEX_DVC_INSTRUCTION_FAIL || (code >= NEX_DVC_ERR_INVALID_COMPONENT && code <= NEX_DVC_ERR_REFERENCE_NAME_TOO_LONG))
-
-/**
- * @brief Verify if a code represents an event.
- */
-
-#define NEX_DVC_CODE_IS_EVENT(code, length) ((code == NEX_DVC_RSP_SENDME_RESULT) || (code >= NEX_DVC_EVT_TOUCH_OCCURRED && code != NEX_DVC_RSP_SENDME_RESULT && code != NEX_DVC_RSP_GET_STRING && code != NEX_DVC_RSP_GET_NUMBER && code != NEX_DVC_RSP_TRANSPARENT_DATA_READY && code != NEX_DVC_RSP_TRANSPARENT_DATA_FINISHED) || (code == NEX_DVC_EVT_HARDWARE_START_RESET && length == 6))
-/**
  * @brief Verify if a code represents a response.
  */
-#define NEX_DVC_CODE_IS_RESPONSE(code, length) (!NEX_DVC_CODE_IS_EVENT(code, length))
+#define NEX_DVC_CODE_IS_ACK_RESPONSE(code) (code <= NEX_DVC_ERR_REFERENCE_NAME_TOO_LONG)
 
 /* ========================================
  *               ERROR CODES
@@ -64,23 +49,23 @@ extern "C"
  * know the ranges.
  *
  * Prefix meanings:
- *   NEX_DVC_INSTRUCTION_ = Instruction returns success, or fail due to malformed command.
- *   NEX_DVC_ERR_         = Instruction was well-formed but the operation failed.
- *   NEX_DVC_EVT_         = Event sent by the device.
- *   NEX_DVC_RSP_         = Instruction executed and returned data.
+ *   NEX_DVC_INS_ = Instruction returns success, or fail due to malformed command.
+ *   NEX_DVC_ERR_ = Instruction was well-formed but the operation failed.
+ *   NEX_DVC_EVT_ = Event sent by the device.
+ *   NEX_DVC_RSP_ = Instruction executed and returned data.
  * ======================================== */
 
 /**
  * @brief Instruction failed.
  * @details Format: 0x00 0xFF 0xFF 0xFF
  */
-#define NEX_DVC_INSTRUCTION_FAIL 0x00U
+#define NEX_DVC_INS_FAIL 0x00U
 
 /**
  * @brief Instruction succeeded.
  * @details Format: 0x01 0xFF 0xFF 0xFF
  */
-#define NEX_DVC_INSTRUCTION_OK 0x01U
+#define NEX_DVC_INS_OK 0x01U
 
 /**
  * @brief Invalid component id or name.
@@ -209,11 +194,13 @@ extern "C"
 
 /**
  * @brief "Sendme" command result.
+ * @remark Can act as an event when executing the
+ * "Sendme" instruction on the display side.
  * @details Format: 0x66 {0x01} 0xFF 0xFF 0xFF
  * Composition:
  *   - {0x01}: page number
  */
-#define NEX_DVC_RSP_SENDME_RESULT 0x66U
+#define NEX_DVC_RSP_SENDME 0x66U
 
 /**
  * @brief Touch coordinate when the device is awake.
@@ -246,12 +233,12 @@ extern "C"
 #define NEX_DVC_EVT_TOUCH_COORDINATE_ASLEEP 0x68U
 
 /**
- * @brief "get command" returning a string.
+ * @brief "get command" returning a text.
  * @details Format: 0x70 {0x61} {0x62} {0x31} {0x32} {0x33} 0xFF 0xFF 0xFF
  * Composition:
  *   - Each byte is a character
  */
-#define NEX_DVC_RSP_GET_STRING 0x70U
+#define NEX_DVC_RSP_GET_TEXT 0x70U
 
 /**
  * @brief "get command" returning a number.
@@ -292,7 +279,7 @@ extern "C"
  * @details Format: 0xFD 0xFF 0xFF 0xFF
  * @note The device is now leaving the "Transparent Data" mode.
  */
-#define NEX_DVC_RSP_TRANSPARENT_DATA_FINISHED 0xFDU
+#define NEX_DVC_EVT_TRANSPARENT_DATA_FINISHED 0xFDU
 
 /**
  * @brief The device is able to receive a specified quantity of data in a "Transparent Data" mode.

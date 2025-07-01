@@ -1,6 +1,5 @@
-#include "esp32_driver_nextion/nextion.h"
-#include "esp32_driver_nextion/system.h"
 #include "esp32_driver_nextion/component.h"
+#include "protocol/protocol.h"
 #include "assertion.h"
 
 nex_err_t nextion_component_refresh(nextion_t *handle, const char *component_name_or_id)
@@ -8,7 +7,7 @@ nex_err_t nextion_component_refresh(nextion_t *handle, const char *component_nam
     CMP_CHECK_HANDLE(handle, NEX_FAIL)
     CMP_CHECK((component_name_or_id != NULL), "component_name_or_id error(NULL)", NEX_FAIL)
 
-    return nextion_command_send(handle, "ref %s", component_name_or_id);
+    return nextion_protocol_send_instruction_ack(handle, "ref %s", component_name_or_id);
 }
 
 nex_err_t nextion_component_set_visibility(nextion_t *handle, const char *component_name_or_id, bool is_visible)
@@ -16,14 +15,14 @@ nex_err_t nextion_component_set_visibility(nextion_t *handle, const char *compon
     CMP_CHECK_HANDLE(handle, NEX_FAIL)
     CMP_CHECK((component_name_or_id != NULL), "component_name_or_id error(NULL)", NEX_FAIL)
 
-    return nextion_command_send(handle, "vis %s,%d", component_name_or_id, is_visible);
+    return nextion_protocol_send_instruction_ack(handle, "vis %s,%d", component_name_or_id, is_visible);
 }
 
 nex_err_t nextion_component_set_visibility_all(nextion_t *handle, bool is_visible)
 {
     CMP_CHECK_HANDLE(handle, NEX_FAIL)
 
-    return nextion_command_send(handle, "vis 255,%d", is_visible);
+    return nextion_component_set_visibility(handle, "255", is_visible);
 }
 
 nex_err_t nextion_component_set_touchable(nextion_t *handle, const char *component_name_or_id, bool is_touchable)
@@ -31,22 +30,22 @@ nex_err_t nextion_component_set_touchable(nextion_t *handle, const char *compone
     CMP_CHECK_HANDLE(handle, NEX_FAIL)
     CMP_CHECK((component_name_or_id != NULL), "component_name_or_id error(NULL)", NEX_FAIL)
 
-    return nextion_command_send(handle, "tsw %s,%d", component_name_or_id, is_touchable);
+    return nextion_protocol_send_instruction_ack(handle, "tsw %s,%d", component_name_or_id, is_touchable);
 }
 
 nex_err_t nextion_component_set_touchable_all(nextion_t *handle, bool is_touchable)
 {
     CMP_CHECK_HANDLE(handle, NEX_FAIL)
 
-    return nextion_command_send(handle, "tsw 255,%d", is_touchable);
+    return nextion_component_set_touchable(handle, "255", is_touchable);
 }
 
 nex_err_t nextion_component_get_text(nextion_t *handle,
                                      const char *component_name,
                                      char *buffer,
-                                     size_t *expected_length)
+                                     size_t buffer_length)
 {
-    return nextion_component_get_property_text(handle, component_name, "txt", buffer, expected_length);
+    return nextion_component_get_property_text(handle, component_name, "txt", buffer, buffer_length);
 }
 
 nex_err_t nextion_component_get_value(nextion_t *handle, const char *component_name, int32_t *number)
@@ -83,20 +82,17 @@ nex_err_t nextion_component_get_property_text(nextion_t *handle,
                                               const char *component_name,
                                               const char *property_name,
                                               char *buffer,
-                                              size_t *expected_length)
+                                              size_t buffer_length)
 {
     CMP_CHECK_HANDLE(handle, NEX_FAIL)
     CMP_CHECK((component_name != NULL), "component_name error(NULL)", NEX_FAIL)
     CMP_CHECK((property_name != NULL), "property_name error(NULL)", NEX_FAIL)
     CMP_CHECK((buffer != NULL), "buffer error(NULL)", NEX_FAIL)
-    CMP_CHECK((expected_length != NULL), "expected_length error(NULL)", NEX_FAIL)
 
-    size_t command_length = 10 + NEX_DVC_COMPONENT_MAX_NAME_LENGTH;
-    char command[10 + NEX_DVC_COMPONENT_MAX_NAME_LENGTH];
-
-    snprintf(command, command_length, "get %s.%s", component_name, property_name);
-
-    return nextion_system_get_text(handle, command, buffer, expected_length);
+    return nextion_protocol_send_instruction_get_text(handle,
+                                                      buffer,
+                                                      buffer_length,
+                                                      "get %s.%s", component_name, property_name);
 }
 
 nex_err_t nextion_component_get_property_number(nextion_t *handle,
@@ -109,12 +105,7 @@ nex_err_t nextion_component_get_property_number(nextion_t *handle,
     CMP_CHECK((property_name != NULL), "property_name error(NULL)", NEX_FAIL)
     CMP_CHECK((number != NULL), "number error(NULL)", NEX_FAIL)
 
-    size_t command_length = 10 + NEX_DVC_COMPONENT_MAX_NAME_LENGTH;
-    char command[10 + NEX_DVC_COMPONENT_MAX_NAME_LENGTH];
-
-    snprintf(command, command_length, "get %s.%s", component_name, property_name);
-
-    return nextion_system_get_number(handle, command, number);
+    return nextion_protocol_send_instruction_get_number(handle, number, "get %s.%s", component_name, property_name);
 }
 
 nex_err_t nextion_component_set_property_text(nextion_t *handle,
@@ -127,7 +118,7 @@ nex_err_t nextion_component_set_property_text(nextion_t *handle,
     CMP_CHECK((property_name != NULL), "property_name error(NULL)", NEX_FAIL)
     CMP_CHECK((text != NULL), "text error(NULL)", NEX_FAIL)
 
-    return nextion_command_send(handle, "%s.%s=\"%s\"", component_name, property_name, text);
+    return nextion_protocol_send_instruction_ack(handle, "%s.%s=\"%s\"", component_name, property_name, text);
 }
 
 nex_err_t nextion_component_set_property_number(nextion_t *handle,
@@ -139,5 +130,5 @@ nex_err_t nextion_component_set_property_number(nextion_t *handle,
     CMP_CHECK((component_name != NULL), "component_name error(NULL)", NEX_FAIL)
     CMP_CHECK((property_name != NULL), "property_name error(NULL)", NEX_FAIL)
 
-    return nextion_command_send(handle, "%s.%s=%d", component_name, property_name, number);
+    return nextion_protocol_send_instruction_ack(handle, "%s.%s=%ld", component_name, property_name, number);
 }
